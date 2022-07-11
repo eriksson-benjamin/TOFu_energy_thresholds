@@ -56,6 +56,9 @@ def calculate_coincidences(shot_number):
     # Return energies corresponding to coincident events
     coincident_energies = dfs.get_dictionaries('merged')
     flight_times = dfs.get_dictionaries('merged')
+    # Times
+    shift_file = '/home/beriksso/TOFu/analysis/benjamin/github/TOFu/shift_files/shift_V4.txt'
+    shifts = dfs.get_shifts(shift_file)
     for lst in tof_info:
         # Detector names
         det_1 = lst[2]
@@ -70,10 +73,13 @@ def calculate_coincidences(shot_number):
                                                energy_S1[det_1][inds_1])
         coincident_energies[det_2] = np.append(coincident_energies[det_2], 
                                                energy_S2[det_2][inds_2])
-        # Times
-        flight_times[det_1] = np.append(flight_times[det_1], 
-                                        times_S2[det_2][inds_2] 
-                                        - times_S1[det_1][inds_1])
+        
+        shift = shifts[det_1][int(det_2[3:])-1]
+        dt = (times_S2[det_2][inds_2] - times_S1[det_1][inds_1]) + shift
+        flight_times[det_1] = np.append(flight_times[det_1], dt)
+        flight_times[det_2] = np.append(flight_times[det_2], dt)
+                                        
+                                        
     return coincident_energies, flight_times
 
 def import_data(shot_number):
@@ -103,7 +109,7 @@ if __name__ == '__main__':
        
         # Save to file
         udfs.pickler(f'data/coincident_energies/{shot_number}.pickle', 
-                      coin_ergs)
+                      coin_ergs, check=False)
         udfs.pickler(f'data/flight_times/{shot_number}.pickle', 
-                     flight_times)
+                     flight_times, check=False)
 
