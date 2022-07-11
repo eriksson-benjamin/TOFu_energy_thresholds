@@ -102,8 +102,8 @@ if __name__ == '__main__':
         coin_ergs, flight_times = calculate_coincidences(shot_number)
        
         # Save to file
-        udfs.pickler(f'data/coincident_energies/{shot_number}.pickle', 
-                      coin_ergs)
-        udfs.pickler(f'data/coincident_energies/{shot_number}.pickle', 
+#        udfs.pickler(f'data/coincident_energies/{shot_number}.pickle', 
+#                      coin_ergs)
+        udfs.pickler(f'data/flight_times/{shot_number}.pickle', 
                      flight_times)
 
