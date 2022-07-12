@@ -69,15 +69,25 @@ def calculate_coincidences(shot_number):
         inds_2 = lst[1][1]
     
         # Energies
-        coincident_energies[det_1] = np.append(coincident_energies[det_1], 
-                                               energy_S1[det_1][inds_1])
-        coincident_energies[det_2] = np.append(coincident_energies[det_2], 
-                                               energy_S2[det_2][inds_2])
+        erg_S1 = energy_S1[det_1][inds_1]
+        erg_S2 = energy_S2[det_2][inds_2]
         
+        # Flight times
         shift = shifts[det_1][int(det_2[3:])-1]
         dt = (times_S2[det_2][inds_2] - times_S1[det_1][inds_1]) + shift
-        flight_times[det_1] = np.append(flight_times[det_1], dt)
-        flight_times[det_2] = np.append(flight_times[det_2], dt)
+        
+        # Apply kinematic cuts
+        dt_c, erg_S1_c, erg_S2_c = dfs.kinematic_cuts(dt, erg_S1, erg_S2)
+        
+        # Save to dictionaries
+        coincident_energies[det_1] = np.append(coincident_energies[det_1], 
+                                               erg_S1_c)
+        coincident_energies[det_2] = np.append(coincident_energies[det_2], 
+                                               erg_S2_c)
+        
+        
+        flight_times[det_1] = np.append(flight_times[det_1], dt_c)
+        flight_times[det_2] = np.append(flight_times[det_2], dt_c)
                                         
                                         
     return coincident_energies, flight_times
@@ -85,10 +95,14 @@ def calculate_coincidences(shot_number):
 def import_data(shot_number):
     path = f'/common/scratch/beriksso/TOFu/data/{shot_number}/{shot_number}_thr.pickle'
     all_data = udfs.unpickle(path)
+    
+    # Times [ns]
     times_S1 = all_data['new_times_S1']
     times_S2 = all_data['new_times_S2']
-    energy_S1 = all_data['energy_S1'] # MeVee
-    energy_S2 = all_data['energy_S2'] # MeVee
+    
+    # Light yield [MeVee]
+    energy_S1 = all_data['energy_S1'] 
+    energy_S2 = all_data['energy_S2']
     
     return times_S1, times_S2, energy_S1, energy_S2
 
@@ -99,7 +113,10 @@ if __name__ == '__main__':
     time_level = 0
     
     # Import data from shots
-    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060]
+    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
+                    100061, 100062, 100063, 100064, 100068, 100069, 100070, 
+                    100072, 100073, 100074, 100075]
+
     for shot_number in shot_numbers:
         # Import time/energy data    
         times_S1, times_S2, energy_S1, energy_S2 = import_data(shot_number)
