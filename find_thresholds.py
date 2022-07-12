@@ -25,14 +25,10 @@ def merge_data(shot_numbers, t0, t1):
     # Merge data from shots to single array
     energies = dfs.get_dictionaries('merged')
     for shot_number in shot_numbers:
-        # Import energies and flight times
+        # Import energies
         erg = udfs.unpickle(f'data/coincident_energies/{shot_number}.pickle')
-        # tim = udfs.unpickle(f'data/flight_times/{shot_number}.pickle')
         
         for key, item in erg.items():
-            # Select events within a given flight time
-            # flags = ((tim[key] > t0) & (tim[key] < t1))
-            # energies[key] = np.append(energies[key], erg[key][flags])
             energies[key] = np.append(energies[key], item)
 
     return energies
@@ -79,9 +75,9 @@ def get_bin_edges(detector):
 
     return np.arange(e[0], e[1], e[2])
 
-def calculate_threshold(x_dat, y_dat):
+def calculate_threshold(x_dat, y_dat, fraction):
     '''
-    Calculate half of maximum, return x position
+    Return the x position at a given fraction of peak maximum.
     '''
     
     # Maximum index
@@ -92,7 +88,7 @@ def calculate_threshold(x_dat, y_dat):
     y = y_dat[:arg_max+1]
     
     # Half maximum
-    arg_half = np.argmin(abs(y-np.max(y)/2))
+    arg_half = np.argmin(abs(y-np.max(y)*fraction))
    
     return x[arg_half]
 
@@ -131,7 +127,7 @@ if __name__ == '__main__':
         ux, uy = plot_polynomial(bin_centres, events, 15, detector, fit_range)
         
         # Find threshold from half maximum
-        threshold = calculate_threshold(ux, uy)
+        threshold = calculate_threshold(ux, uy, 0.1)
         print(f'{detector}: {threshold:.4f}')
         
         # Plot and save to file
