@@ -101,35 +101,50 @@ def plot_for_paper(shot_numbers):
     # Merge all data for given shot numbers
     energies = merge_data(shot_numbers, 20, 80)
     
-    detectors = ['S1_01', 'S1_02', 'S2_01', 'S2_02']
-    fig, axes = plt.subplots(2, 2)
-    breakpoint()
-    print(axes.flatten())
-    for detector, ax in zip(detectors, axes.flatten()):
-        bin_edges = get_bin_edges(detector)
+    detectors = ['S1_01', 'S1_02', 'S2_24', 'S2_25']
+    fig, axes = plt.subplots(2, 2, sharey='row')
+    plt.subplots_adjust(hspace=0.3)
+    letters = ['(a)', '(b)', '(c)', '(d)']
+    xranges = [[0, 0.16], [0, 0.16], [0, 0.5], [0, 0.5]]
+    yranges = [[-0.2, None], [-0.2, None], [-0.2, None], [-0.2, None]]
+    for i, ax in enumerate(axes.flatten()):
+        bin_edges = get_bin_edges(detectors[i])
         bin_centres = bin_edges[1:]-np.diff(bin_edges)/2
         
         # Histogram the energy spectrum
-        events, _ = np.histogram(energies[detector], bin_edges)
-        
-        # Plot light yield spectrum
-        ax.title(detector.replace('_', '-'), loc='left')
-        ax.plot(bin_centres, events, 'k.', markersize=2)
-        ax.errorbar(bin_centres, events, yerr=np.sqrt(events), color='k', 
-                     linestyle='None')
+        events, _ = np.histogram(energies[detectors[i]], bin_edges)
         
         # Fit polynomial to to peak    
-        fit_range = get_fit_range(detector)
         
-        ux, uy = plot_polynomial(bin_centres, events, 15, detector, fit_range)
-        ax.plot(ux, uy, 'r-')
+        fit_range = get_fit_range(detectors[i])
+        ux, uy = plot_polynomial(bin_centres, events, 15, detectors[i], fit_range)
         
         # Find threshold from fraction of maximum
         threshold = calculate_threshold(ux, uy, 0.1)
+        
+        # Light yield spectrum
+        ax.plot(bin_centres, events/events.max(), 'k.', markersize=2)
+        ax.errorbar(bin_centres, events/events.max(), 
+                    yerr=np.sqrt(events)/events.max(), color='k', 
+                    linestyle='None')
+        
+        # Polynomial
+        ax.plot(ux, uy/events.max(), 'r-')
+        
+        # Thresholds
         ax.axvline(threshold, color='k', linestyle='--')
-        ax.title(f'$E_{{thr}}$ = {threshold:.3f} MeV$_{{ee}}$', loc='right')        
-        
-        
+
+        # Configure plots
+        ax.text(0.05, 0.83, letters[i], transform=ax.transAxes)
+        # ax.text(0.3, 0.1, f'E$_{{thr}}$ = {1000*threshold:.0f} keV$_{{ee}}$', transform=ax.transAxes)
+        ax.text(1.15*threshold, 0, 
+                f'E$_{{thr}}$ = {1000*threshold:.0f} keV$_{{ee}}$')
+
+        ax.set_xlim(xranges[i][0], xranges[i][1])
+        ax.set_ylim(yranges[i][0], yranges[i][1])
+    ax.text(0.47, 0.05, 'E$_{ee}$ (MeV$_{ee}$)', transform=fig.transFigure)
+    ax.text(0.08, 0.5, 'counts (a.u.)', transform=fig.transFigure, rotation='vertical')
+    
 def main(shot_numbers):
     # Store thresholds in txt file
     with open('thresholds.txt', 'w') as handle:
@@ -172,7 +187,6 @@ if __name__ == '__main__':
     
     # main(shot_numbers)
     #plot_for_paper(shot_numbers)
-
     plot_for_paper(shot_numbers)
 
 
