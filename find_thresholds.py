@@ -33,7 +33,7 @@ def merge_data(shot_numbers, t0, t1):
 
     return energies
 
-def plot_spectrum(detector, energies, bin_centres):
+def plot_spectrum(detector, events, bin_centres):
     plt.figure(detector)
     plt.title(detector.replace('_', '-'), loc='left')
     plt.plot(bin_centres, events, 'k.', markersize=2)
@@ -97,12 +97,40 @@ def plot_threshold(detector, threshold):
     plt.axvline(threshold, color='k', linestyle='--')
     plt.title(f'$E_{{thr}}$ = {threshold:.3f} MeV$_{{ee}}$', loc='right')
     
-if __name__ == '__main__':
-    # Analysed shots
-    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
-                    100061, 100062, 100063, 100064, 100068, 100069, 100070, 
-                    100072, 100073, 100074, 100075]
+def plot_for_paper(shot_numbers):
+    # Merge all data for given shot numbers
+    energies = merge_data(shot_numbers, 20, 80)
     
+    detectors = ['S1_01', 'S1_02', 'S2_01', 'S2_02']
+    fig, axes = plt.subplots(2, 2)
+    breakpoint()
+    print(axes.flatten())
+    for detector, ax in zip(detectors, axes.flatten()):
+        bin_edges = get_bin_edges(detector)
+        bin_centres = bin_edges[1:]-np.diff(bin_edges)/2
+        
+        # Histogram the energy spectrum
+        events, _ = np.histogram(energies[detector], bin_edges)
+        
+        # Plot light yield spectrum
+        ax.title(detector.replace('_', '-'), loc='left')
+        ax.plot(bin_centres, events, 'k.', markersize=2)
+        ax.errorbar(bin_centres, events, yerr=np.sqrt(events), color='k', 
+                     linestyle='None')
+        
+        # Fit polynomial to to peak    
+        fit_range = get_fit_range(detector)
+        
+        ux, uy = plot_polynomial(bin_centres, events, 15, detector, fit_range)
+        ax.plot(ux, uy, 'r-')
+        
+        # Find threshold from fraction of maximum
+        threshold = calculate_threshold(ux, uy, 0.1)
+        ax.axvline(threshold, color='k', linestyle='--')
+        ax.title(f'$E_{{thr}}$ = {threshold:.3f} MeV$_{{ee}}$', loc='right')        
+        
+        
+def main(shot_numbers):
     # Store thresholds in txt file
     with open('thresholds.txt', 'w') as handle:
         handle.write('# Detector Threshold (MeVee)\n')
@@ -122,11 +150,11 @@ if __name__ == '__main__':
         # Plot light yield spectrum
         plot_spectrum(detector, events, bin_centres)
     
-        # Fit polnomial to to peak    
+        # Fit polynomial to to peak    
         fit_range = get_fit_range(detector)
         ux, uy = plot_polynomial(bin_centres, events, 15, detector, fit_range)
         
-        # Find threshold from half maximum
+        # Find threshold from fraction of maximum
         threshold = calculate_threshold(ux, uy, 0.1)
         print(f'{detector}: {threshold:.4f}')
         
@@ -135,6 +163,17 @@ if __name__ == '__main__':
     
         with open('thresholds.txt', 'a') as handle:
             handle.write(f'{detector} {threshold:.4f}\n')
+            
+if __name__ == '__main__':
+    # Analysed shots
+    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
+                    100061, 100062, 100063, 100064, 100068, 100069, 100070, 
+                    100072, 100073, 100074, 100075]
+    
+    # main(shot_numbers)
+    #plot_for_paper(shot_numbers)
+
+    plot_for_paper(shot_numbers)
 
 
 
