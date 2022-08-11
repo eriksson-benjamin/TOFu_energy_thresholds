@@ -14,9 +14,11 @@ Data is stored locally on PC and on backup of PC.
 '''
 
 import sys
-sys.path.insert(0, 'C:/python/definitions/')
+sys.path.insert(0, 'C:/python/useful_definitions/')
 import useful_defs as udfs
-import definitions_heimdall as dfs
+sys.path.insert(0, '/home/beriksso/TOFu/analysis/benjamin/github/TOFu/functions/')
+sys.path.insert(0, 'C:/python/TOFu/functions/')
+import tofu_functions as dfs
 import numpy as np
 import matplotlib.pyplot as plt
 udfs.set_nes_plot_style()
@@ -183,11 +185,11 @@ if __name__ == '__main__':
     # Analysed shots
     shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
                     100061, 100062, 100063, 100064, 100068, 100069, 100070, 
-                    100072, 100073, 100074, 100075]
+                    100072, 100073, 100074, 100075, 100077]
     
-    # main(shot_numbers)
-    #plot_for_paper(shot_numbers)
+    main(shot_numbers)
     plot_for_paper(shot_numbers)
+#    plot_for_paper(shot_numbers)
 
 
 

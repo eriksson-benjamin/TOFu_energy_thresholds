@@ -113,10 +113,10 @@ if __name__ == '__main__':
     time_level = 0
     
     # Import data from shots
-    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
-                    100061, 100062, 100063, 100064, 100068, 100069, 100070, 
-                    100072, 100073, 100074, 100075]
-
+#    shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
+#                    100061, 100062, 100063, 100064, 100068, 100069, 100070, 
+#                    100072, 100073, 100074, 100075]
+    shot_numbers = [100077]
     for shot_number in shot_numbers:
         # Import time/energy data    
         times_S1, times_S2, energy_S1, energy_S2 = import_data(shot_number)
