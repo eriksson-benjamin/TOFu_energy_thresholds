@@ -138,7 +138,6 @@ def plot_for_paper(shot_numbers):
 
         # Configure plots
         ax.text(0.05, 0.83, letters[i], transform=ax.transAxes)
-        # ax.text(0.3, 0.1, f'E$_{{thr}}$ = {1000*threshold:.0f} keV$_{{ee}}$', transform=ax.transAxes)
         ax.text(1.15*threshold, 0, 
                 f'E$_{{thr}}$ = {1000*threshold:.0f} keV$_{{ee}}$')
 
@@ -185,11 +184,12 @@ if __name__ == '__main__':
     # Analysed shots
     shot_numbers = [100054, 100055, 100056, 100057, 100058, 100059, 100060,
                     100061, 100062, 100063, 100064, 100068, 100069, 100070, 
-                    100072, 100073, 100074, 100075, 100077]
+                    100072, 100073, 100074, 100075, 100077, 100078, 100079,
+                    100080, 100081, 100082, 100083, 100084, 100085, 100086,
+                    100087, 100088]
     
     main(shot_numbers)
     plot_for_paper(shot_numbers)
-#    plot_for_paper(shot_numbers)
 
 
 
