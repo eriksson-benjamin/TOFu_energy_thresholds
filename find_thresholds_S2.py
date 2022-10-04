@@ -32,7 +32,7 @@ udfs.set_nes_plot_style()
 import scipy
 
 
-def merge_data(shot_numbers, t0, t1):
+def merge_data(shot_numbers):
     """Merge data from shots to single array."""
     energies = dfs.get_dictionaries('merged')
     for shot_number in shot_numbers:
@@ -50,7 +50,7 @@ def model(a, b, l, k, x0, x):
     L = l / (1 + np.exp(-k**3 * (x - x0)))
     e = a**5 * np.exp(-b**5 * x)
 
-    return L * e
+    return e * L
 
 
 def plot_model(parameters, x, y, yerr, detector):
@@ -67,6 +67,8 @@ def plot_model(parameters, x, y, yerr, detector):
     plt.xlabel('$E_{ee}$ (MeV$_{ee}$)')
     plt.ylabel('counts (a.u.)')
     plt.title(detector.replace('_', '-'), loc='left')
+    plt.ylim(0, 1.5)
+    plt.xlim(0, 0.4)
 
 
 def fit_function(parameters, x, y, detector):
@@ -78,9 +80,7 @@ def fit_function(parameters, x, y, detector):
 
     # Calculate chi^2
     dof = len(y_data) - len(parameters)
-    # dof = 1
     chi2 = np.sum((y_data - y_model)**2 / y_model) / dof
-
     return chi2
 
 
@@ -121,22 +121,22 @@ def starting_guesses(detector):
     return a, b, l, k, x0
 
 
-def main(shot_numbers):
+def print_popt(popt):
+    """Print fit parameters."""
+    print((f'{popt.x[0]:.4f} {popt.x[1]:.4f} '
+           f'{popt.x[2]:.4f} {popt.x[3]:.4f} {popt.x[4]:.4f}'))
+
+
+def main(shot_numbers, detectors):
     """Perform fit, plot, and save to file."""
     # Store thresholds in txt file
     with open('thresholds_S2.txt', 'w') as handle:
         handle.write('# Detector Threshold (MeVee)\n')
 
     # Merge all data for given shot numbers
-    energies = merge_data(shot_numbers, 20, 80)
+    energies = merge_data(shot_numbers)
 
-    detectors = dfs.get_dictionaries('S2')
-    for detector in detectors.keys():
-        # Missing data in two detectors
-        if detector in ['S2_12', 'S2_16']:
-            continue
-        # if detector != 'S2_13':
-        #     continue
+    for detector in detectors:
         print(detector)
         print('-----')
         bin_edges = get_bin_edges(detector)
@@ -147,12 +147,12 @@ def main(shot_numbers):
         u_events = np.sqrt(events) / events.max()
         events = events / events.max()
 
-        # # Plot initial guess
-        # plot_model(starting_guesses(detector), x=bin_centres,
-        #            y=events, yerr=u_events, detector=detector)
+        # Plot initial guess
+        plot_model(starting_guesses(detector), x=bin_centres,
+                   y=events, yerr=u_events, detector=f'Init. guess {detector}')
 
         # Minimize test statistic with given bounds
-        bnds = ((0, None), (0, None), (0, 1), (0, None), (0, 0.2))
+        bnds = ((0, None), (0, None), (0, 1.2), (0, None), (0, 0.5))
         parameters = starting_guesses(detector)
         popt = scipy.optimize.minimize(fit_function, parameters, bounds=bnds,
                                        args=(bin_centres, events, detector))
@@ -162,6 +162,7 @@ def main(shot_numbers):
         print(f'k = {popt.x[3]}')
         print(f'x0 = {popt.x[4]}')
         print('')
+        print_popt(popt)
         plot_model(popt.x, bin_centres, events, u_events, detector)
 
         # Plot thresholds
@@ -179,6 +180,8 @@ def main(shot_numbers):
             handle.write(f'k  {popt.x[3]}\n')
             handle.write(f'x0 {popt.x[4]}\n')
 
+    return popt
+
 
 if __name__ == '__main__':
     # Analysed shots
@@ -187,5 +190,5 @@ if __name__ == '__main__':
                     100072, 100073, 100074, 100075, 100077, 100078, 100079,
                     100080, 100081, 100082, 100083, 100084, 100085, 100086,
                     100087, 100088]
-
-    popt = main(shot_numbers)
+    detectors = dfs.get_dictionaries('S2')
+    popt = main(shot_numbers, detectors)

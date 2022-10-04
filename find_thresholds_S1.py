@@ -44,7 +44,8 @@ def model(a, b, l, k, x0, x):
     L = l / (1 + np.exp(-k**3 * (x - x0)))
     e = a**5 * np.exp(-b**5 * x)
 
-    return L * e
+    offset = 0
+    return (e + offset) * L
 
 
 def plot_model(parameters, x, y, yerr, detector):
@@ -111,8 +112,7 @@ def starting_guesses(detector):
     l = float(p[arg, 3])
     k = float(p[arg, 4])
     x0 = float(p[arg, 5])
-
-    return a, b, l, k, x0
+    return a, b, l, k, x0,
 
 
 def main(detector):
@@ -125,9 +125,9 @@ def main(detector):
     u_events = np.sqrt(events) / events.max()
     events = events / events.max()
 
-    # # Plot initial guess
-    # plot_model(starting_guesses(detector), x=bin_centres,
-    #            y=events, yerr=u_events, detector=f'Init. guess {detector}')
+    # Plot initial guess
+    plot_model(starting_guesses(detector), x=bin_centres,
+               y=events, yerr=u_events, detector=f'Init. guess {detector}')
 
     # Minimize test statistic with given bounds
     bnds = ((0, None), (0, None), (0, 1), (0, None), (0, 0.2))
@@ -162,7 +162,8 @@ def main(detector):
 
 def print_popt(popt):
     """Print fit parameters."""
-    print(popt.x[0], popt.x[1], popt.x[2], popt.x[3], popt.x[4])
+    print(f'{popt.x[0]:.4f} {popt.x[1]:.4f} {popt.x[2]:.4f} {popt.x[3]:.4f} '
+          f'{popt.x[4]:.4f}')
 
 
 if __name__ == '__main__':
@@ -170,8 +171,7 @@ if __name__ == '__main__':
     with open('thresholds_S1.txt', 'w') as handle:
         handle.write('# Detector Threshold (MeVee)\n')
 
-    detectors = ['S1_01', 'S1_02', 'S1_03', 'S1_04', 'S1_05', 'S2_12', 'S2_16']
+    detectors = ['S1_01', 'S1_02', 'S1_03', 'S1_04', 'S1_05']
     for detector in detectors:
         popt = main(detector)
         print_popt(popt)
-    # plot_for_paper(shot_numbers)
