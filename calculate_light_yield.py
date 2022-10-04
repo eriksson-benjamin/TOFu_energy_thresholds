@@ -26,7 +26,7 @@ def calculate_light_yield(detector):
         rec_len = 56
         bias_level = 1600
 
-    path = '../gamma_calibration/data/raw_data/20-11-2020/'
+    path = '../gamma_calibration/data/raw_data/Na22/20-11-2020/'
     p = udfs.import_pulses(board=board, channel=channel, path=path,
                            record_length=rec_len)
 
@@ -71,7 +71,7 @@ def load_bins(detector):
 def histogram_data(detector):
     """Bin light yield data and save bins/counts to file."""
     # Read light yield data
-    p_ly = udfs.unpickle(f'data/Na-22/light_yield/full/{detector}.pickle')
+    p_ly = udfs.unpickle(f'{detector}.pickle')
 
     # Histogram data
     bins = load_bins(detector)
@@ -97,7 +97,6 @@ def histogram_data(detector):
 
 if __name__ == '__main__':
     detectors = dfs.get_dictionaries('merged')
-    detectors = ['S2_16']
     for detector in detectors:
-        # p_ly = calculate_light_yield(detector)
+        p_ly = calculate_light_yield(detector)
         bins, h_ly = histogram_data(detector)
