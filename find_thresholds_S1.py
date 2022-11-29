@@ -32,9 +32,10 @@ udfs.set_nes_plot_style()
 import scipy
 
 
-def read_data(detector):
+def read_data(detector, directory):
     """Read binned Na-22 data from energy calibration."""
-    p = udfs.unpickle(f'data/Na-22/light_yield/binned/{detector}.pickle')
+    p = udfs.unpickle(
+        f'data/Na-22/light_yield/binned/{directory}/{detector}.pickle')
 
     return p['bin centres'], p['counts']
 
@@ -46,6 +47,8 @@ def model(a, b, l, k, x0, x):
 
     offset = 0
     return (e + offset) * L
+    # return (e + offset)
+    # return L
 
 
 def plot_model(parameters, x, y, yerr, detector):
@@ -66,12 +69,12 @@ def plot_model(parameters, x, y, yerr, detector):
 
 def fit_function(parameters, x, y, detector):
     """Minimize chi^2 for given fitting region."""
-    fit_range = get_fit_range(detector)
+    fit_range = get_fit_range(detector, directory)
     bool_range = (x >= fit_range[0]) & (x <= fit_range[1])
     y_model = model(*parameters, x)[bool_range]
     y_data = y[bool_range]
 
-    # Calculate chi^2
+    # Calculate reduced chi^2
     dof = len(y_data) - len(parameters)
     # dof = 1
     chi2 = np.sum((y_data - y_model)**2 / y_model) / dof
@@ -79,9 +82,10 @@ def fit_function(parameters, x, y, detector):
     return chi2
 
 
-def get_fit_range(detector):
+def get_fit_range(detector, directory):
     """Return detector specific fit ranges."""
-    lines = np.loadtxt('data/fit_ranges.txt', dtype='str')
+    lines = np.loadtxt(f'data/starting_guesses/{directory}/fit_ranges.txt',
+                       dtype='str')
     ranges = {l[0]: [float(l[1]), float(l[2])] for l in lines}
 
     return ranges[detector]
@@ -89,7 +93,8 @@ def get_fit_range(detector):
 
 def get_bin_edges(detector):
     """Return detector specific binning."""
-    lines = np.loadtxt('data/bin_edges.txt', dtype='str')
+    lines = np.loadtxt('data/starting_guesses/{directory}/bin_edges.txt',
+                       dtype='str')
     edges = {l[0]: [float(l[1]), float(l[2]), float(l[3])] for l in lines}
     e = edges[detector]
 
@@ -103,9 +108,10 @@ def plot_threshold(detector, threshold):
     plt.title(f'$E_{{thr}}$ = {threshold:.3f} MeV$_{{ee}}$', loc='right')
 
 
-def starting_guesses(detector):
+def starting_guesses(detector, directory):
     """Return starting guesses for given detector."""
-    p = np.loadtxt('data/starting_guesses.txt', dtype='str')
+    p = np.loadtxt(f'data/starting_guesses/{directory}/starting_guesses.txt',
+                   dtype='str')
     arg = np.where(p[:, 0] == detector)[0]
     a = float(p[arg, 1])
     b = float(p[arg, 2])
@@ -115,23 +121,23 @@ def starting_guesses(detector):
     return a, b, l, k, x0,
 
 
-def main(detector):
+def main(detector, directory):
     """Perform fit, plot, and save to file."""
     print(detector)
     print('-----')
 
     # Read the binned data and normalize
-    bin_centres, events = read_data(detector)
+    bin_centres, events = read_data(detector, directory)
     u_events = np.sqrt(events) / events.max()
     events = events / events.max()
 
     # Plot initial guess
-    plot_model(starting_guesses(detector), x=bin_centres,
+    plot_model(starting_guesses(detector, directory), x=bin_centres,
                y=events, yerr=u_events, detector=f'Init. guess {detector}')
 
     # Minimize test statistic with given bounds
     bnds = ((0, None), (0, None), (0, 1), (0, None), (0, 0.2))
-    parameters = starting_guesses(detector)
+    parameters = starting_guesses(detector, directory)
     popt = scipy.optimize.minimize(fit_function, parameters, bounds=bnds,
                                    args=(bin_centres, events, detector))
     print(f'a = {popt.x[0]}')
@@ -172,6 +178,7 @@ if __name__ == '__main__':
         handle.write('# Detector Threshold (MeVee)\n')
 
     detectors = ['S1_01', 'S1_02', 'S1_03', 'S1_04', 'S1_05']
+    directory = '26-11-2022'
     for detector in detectors:
-        popt = main(detector)
+        popt = main(detector, directory)
         print_popt(popt)

@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 dfs.set_plot_style()
 
 
-def calculate_light_yield(detector):
+def calculate_light_yield(detector, directory):
     """Calculate the light yield spectra of Na-22 data."""
     # Import pulse waveforms
     board, channel = dfs.get_board_name(detector)
@@ -26,7 +26,7 @@ def calculate_light_yield(detector):
         rec_len = 56
         bias_level = 1600
 
-    path = '../gamma_calibration/data/raw_data/Na22/20-11-2020/'
+    path = f'../gamma_calibration/data/raw_data/Na22/{directory}/'
     p = udfs.import_pulses(board=board, channel=channel, path=path,
                            record_length=rec_len)
 
@@ -48,7 +48,7 @@ def calculate_light_yield(detector):
     p_ar = -dfs.get_pulse_area(dat_sinc, 10)
 
     # Calculate light yield
-    p_ly = dfs.get_energy_calibration_(p_ar, detector)
+    p_ly = dfs.get_energy_calibration(p_ar, detector)
 
     # Save to file
     to_save = {'light yield': p_ly}
@@ -97,6 +97,7 @@ def histogram_data(detector):
 
 if __name__ == '__main__':
     detectors = dfs.get_dictionaries('merged')
+    directory = '26-11-2022'
     for detector in detectors:
-        p_ly = calculate_light_yield(detector)
+        p_ly = calculate_light_yield(detector, directory)
         bins, h_ly = histogram_data(detector)
