@@ -29,7 +29,7 @@ def plot_for_paper(shot_numbers):
             bin_centres, events = fcns1.read_data(detectors[i])
         else:
             # Merge all data for given shot numbers
-            energies = fcns2.merge_data(shot_numbers, 20, 80)
+            energies = fcns2.merge_data(shot_numbers)
             bin_edges = fcns2.get_bin_edges(detectors[i])
             bin_centres = bin_edges[1:] - np.diff(bin_edges) / 2
 
@@ -64,9 +64,11 @@ def plot_for_paper(shot_numbers):
 
         ax.set_xlim(1E3 * xranges[i][0], 1E3 * xranges[i][1])
         ax.set_ylim(yranges[i][0], yranges[i][1])
+        ax.set_title(detectors[i].replace('_', '-'), loc='left')
     ax.text(0.47, 0.05, 'E$_{ee}$ (keV$_{ee}$)', transform=fig.transFigure)
     ax.text(0.08, 0.5, 'counts (a.u.)', transform=fig.transFigure,
             rotation='vertical')
+    plt.subplots_adjust(hspace=0.45)
 
 
 if __name__ == '__main__':
