@@ -32,12 +32,13 @@ udfs.set_nes_plot_style()
 import scipy
 
 
-def merge_data(shot_numbers):
+def merge_data(shot_numbers, directory):
     """Merge data from shots to single array."""
     energies = dfs.get_dictionaries('merged')
     for shot_number in shot_numbers:
         # Import energies
-        erg = udfs.unpickle(f'data/coincident_energies/{shot_number}.pickle')
+        f_name = f'data/coincident_energies/{directory}/{shot_number}.pickle'
+        erg = udfs.unpickle(f_name)
 
         for key, item in erg.items():
             energies[key] = np.append(energies[key], item)
@@ -71,9 +72,9 @@ def plot_model(parameters, x, y, yerr, detector):
     plt.xlim(0, 0.4)
 
 
-def fit_function(parameters, x, y, detector):
+def fit_function(parameters, x, y, detector, directory):
     """Minimize chi^2 for given fitting region."""
-    fit_range = get_fit_range(detector)
+    fit_range = get_fit_range(detector, directory)
     bool_range = (x >= fit_range[0]) & (x <= fit_range[1])
     y_model = model(*parameters, x)[bool_range]
     y_data = y[bool_range]
@@ -84,17 +85,19 @@ def fit_function(parameters, x, y, detector):
     return chi2
 
 
-def get_fit_range(detector):
+def get_fit_range(detector, directory):
     """Return detector specific fit ranges."""
-    lines = np.loadtxt('data/fit_ranges.txt', dtype='str')
+    lines = np.loadtxt(f'data/starting_guesses/{directory}/fit_ranges.txt',
+                       dtype='str')
     ranges = {l[0]: [float(l[1]), float(l[2])] for l in lines}
 
     return ranges[detector]
 
 
-def get_bin_edges(detector):
+def get_bin_edges(detector, directory):
     """Return detector specific binning."""
-    lines = np.loadtxt('data/bin_edges.txt', dtype='str')
+    lines = np.loadtxt(f'data/starting_guesses/{directory}/bin_edges.txt',
+                       dtype='str')
     edges = {l[0]: [float(l[1]), float(l[2]), float(l[3])] for l in lines}
     e = edges[detector]
 
@@ -108,9 +111,10 @@ def plot_threshold(detector, threshold):
     plt.title(f'$E_{{thr}}$ = {threshold:.3f} MeV$_{{ee}}$', loc='right')
 
 
-def starting_guesses(detector):
+def starting_guesses(detector, directory):
     """Return starting guesses for given detector."""
-    p = np.loadtxt('data/starting_guesses.txt', dtype='str')
+    p = np.loadtxt(f'data/starting_guesses/{directory}/starting_guesses.txt',
+                   dtype='str')
     arg = np.where(p[:, 0] == detector)[0]
     a = float(p[arg, 1])
     b = float(p[arg, 2])
@@ -127,19 +131,19 @@ def print_popt(popt):
            f'{popt.x[2]:.4f} {popt.x[3]:.4f} {popt.x[4]:.4f}'))
 
 
-def main(shot_numbers, detectors):
+def main(shot_numbers, detectors, directory):
     """Perform fit, plot, and save to file."""
     # Store thresholds in txt file
     with open('thresholds_S2.txt', 'w') as handle:
         handle.write('# Detector Threshold (MeVee)\n')
 
     # Merge all data for given shot numbers
-    energies = merge_data(shot_numbers)
+    energies = merge_data(shot_numbers, directory)
 
     for detector in detectors:
         print(detector)
         print('-----')
-        bin_edges = get_bin_edges(detector)
+        bin_edges = get_bin_edges(detector, directory)
         bin_centres = bin_edges[1:] - np.diff(bin_edges) / 2
 
         # Histogram the energy spectrum and normalize
@@ -148,14 +152,15 @@ def main(shot_numbers, detectors):
         events = events / events.max()
 
         # Plot initial guess
-        plot_model(starting_guesses(detector), x=bin_centres,
+        plot_model(starting_guesses(detector, directory), x=bin_centres,
                    y=events, yerr=u_events, detector=f'Init. guess {detector}')
 
         # Minimize test statistic with given bounds
         bnds = ((0, None), (0, None), (0, 1.2), (0, None), (0, 0.5))
-        parameters = starting_guesses(detector)
+        parameters = starting_guesses(detector, directory)
+        args = (bin_centres, events, detector, directory)
         popt = scipy.optimize.minimize(fit_function, parameters, bounds=bnds,
-                                       args=(bin_centres, events, detector))
+                                       args=args)
         print(f'a = {popt.x[0]}')
         print(f'b = {popt.x[1]}')
         print(f'l = {popt.x[2]}')
@@ -191,4 +196,6 @@ if __name__ == '__main__':
                     100080, 100081, 100082, 100083, 100084, 100085, 100086,
                     100087, 100088]
     detectors = dfs.get_dictionaries('S2')
-    popt = main(shot_numbers, detectors)
+    detectors = ['S2_29']
+    directory = '20-11-2020'
+    popt = main(shot_numbers, detectors, directory)
